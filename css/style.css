@@ -922,6 +922,7 @@ section h2 {
 
     .advantage-grid {
         grid-template-columns: 1fr; /* 单列显示 */
+        justify-content: center; /* 移动端媒体块水平居中 */
     }
 
     .product-grid {
@@ -938,10 +939,10 @@ section h2 {
         right: 20px;
         width: 50px;
         height: 50px;
-        background-color: #00c300; /* LINE绿色 */
+        background-color: transparent; /* 彻底移除背景色 */
         border-radius: 50%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        display: flex;
+        box-shadow: none; /* 移除可能影响的阴影 */
+        display: flex; /* 确保移动端显示 */
         justify-content: center;
         align-items: center;
         cursor: pointer;
@@ -1732,6 +1733,7 @@ section h2 {
 
     .advantage-grid {
         grid-template-columns: 1fr; /* 单列显示 */
+        justify-content: center; /* 移动端媒体块水平居中 */
     }
 
     .product-grid {
@@ -1748,10 +1750,10 @@ section h2 {
         right: 20px;
         width: 50px;
         height: 50px;
-        background-color: #00c300; /* LINE绿色 */
+        background-color: transparent; /* 彻底移除背景色 */
         border-radius: 50%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        display: flex;
+        box-shadow: none; /* 移除可能影响的阴影 */
+        display: flex; /* 确保移动端显示 */
         justify-content: center;
         align-items: center;
         cursor: pointer;
