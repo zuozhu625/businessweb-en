@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- Import Font Awesome (example) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <!-- 添加ffmpeg.js配置 -->
+    <script>
+        window.FFMPEG_PUBLIC_PATH = '/js/ffmpeg/';
+    </script>
 </head>
 <body>
     <main>
@@ -175,11 +179,239 @@
         </div>
     </footer>
 
-    <!-- Floating customer service button on the right -->
-    <div class="floating-chat-button" style="position: fixed; right: 0; top: 50%; transform: translateY(-50%); width: 75px; height: 75px;" onclick="window.open('https://line.me/R/ti/p/@145zejab', '_blank')">
+    <!-- 在LINE浮窗下方增加AI聊天图标 -->
+    <div class="floating-chat-button" style="position: fixed; right: 0; top: 50%; transform: translateY(-50%); width: 75px; height: 75px; z-index: 1000;" onclick="window.open('https://line.me/R/ti/p/@145zejab', '_blank')">
         <img src="img/line-icon.svg" alt="LINE Icon" style="width: 50px; height: 50px; display: block; margin: 0 auto;"/>
     </div>
 
-    <script src="js/script.js"></script>
+    <!-- AI聊天图标 -->
+    <div class="ai-chat-icon" style="position: fixed; right: 0; top: 70%; transform: translateY(-50%); width: 75px; height: 75px; cursor: pointer; z-index: 1000;" onclick="showChatWindow();">
+        <img src="img/AI窗口.jpg" alt="AI Chat Icon" style="width: 50px; height: 50px; display: block; margin: 0 auto;"/>
+    </div>
+
+    <!-- AI聊天窗口 -->
+    <div id="ai-chat-window" class="ai-chat-window" style="position: fixed; right: 0; top: 45%; transform: translateY(-50%); width: 300px; height: 493px; border: 1px solid #2c2c2c; border-radius: 10px; overflow: hidden; display: none; background: #1a1a1a; z-index: 1001;">
+        <div style="display: flex; flex-direction: column; height: 100%;">
+            <!-- 聊天窗口头部 -->
+            <div style="background: #2c2c2c; color: #ffffff; padding: 10px; text-align: center; font-weight: bold; border-bottom: 1px solid #3c3c3c; position: relative;">
+                AI智能助手
+                <button onclick="hideChatWindow();" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #ff0000; color: white; border: none; font-size: 14px; font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 3px;">关闭</button>
+            </div>
+            
+            <!-- 聊天消息区域 -->
+            <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 10px; background: #1a1a1a;">
+                <!-- 欢迎消息 -->
+                <div style="margin-bottom: 10px; padding: 8px; background: #2c2c2c; border-radius: 10px; max-width: 80%; color: #ffffff;">
+                    您好！我是AI智能助手，很高兴为您服务。请问有什么可以帮您？
+                </div>
+            </div>
+            
+            <!-- 输入区域 -->
+            <div style="padding: 10px; border-top: 1px solid #3c3c3c; background: #1a1a1a;">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="message-input" placeholder="请输入您的问题..." style="flex: 1; padding: 8px; border: 1px solid #3c3c3c; border-radius: 4px; background: #2c2c2c; color: #ffffff;">
+                    <button onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加聊天功能的脚本 -->
+    <script>
+        // 添加移动端适配
+        function adjustForMobile() {
+            const isMobile = window.innerWidth <= 768;
+            const chatWindow = document.getElementById('ai-chat-window');
+            const lineButton = document.querySelector('.floating-chat-button');
+            const aiButton = document.querySelector('.ai-chat-icon');
+            
+            try {
+                if (isMobile) {
+                    // 移动端样式
+                    chatWindow.style.width = '90%';
+                    chatWindow.style.height = '80vh';
+                    chatWindow.style.right = '5%';
+                    chatWindow.style.top = '50%';
+                    chatWindow.style.transform = 'translateY(-50%)';
+                    
+                    // 调整按钮大小和位置 - 增加20%
+                    lineButton.style.width = '72px';  // 60px * 1.2
+                    lineButton.style.height = '72px'; // 60px * 1.2
+                    lineButton.style.right = '10px';
+                    lineButton.style.transform = 'translateY(-50%)';
+                    
+                    aiButton.style.width = '72px';    // 60px * 1.2
+                    aiButton.style.height = '72px';   // 60px * 1.2
+                    aiButton.style.right = '10px';
+                    aiButton.style.top = '60%';
+                    aiButton.style.transform = 'translateY(-50%)';
+                    
+                    // 调整按钮内的图标大小 - 增加20%
+                    const lineImg = lineButton.querySelector('img');
+                    const aiImg = aiButton.querySelector('img');
+                    if (lineImg) {
+                        lineImg.style.width = '48px';  // 40px * 1.2
+                        lineImg.style.height = '48px'; // 40px * 1.2
+                    }
+                    if (aiImg) {
+                        aiImg.style.width = '48px';    // 40px * 1.2
+                        aiImg.style.height = '48px';   // 40px * 1.2
+                    }
+                } else {
+                    // 桌面端样式
+                    chatWindow.style.width = '300px';
+                    chatWindow.style.height = '493px';
+                    chatWindow.style.right = '0';
+                    chatWindow.style.top = '45%';
+                    chatWindow.style.transform = 'translateY(-50%)';
+                    
+                    lineButton.style.width = '75px';
+                    lineButton.style.height = '75px';
+                    lineButton.style.right = '0';
+                    lineButton.style.transform = 'translateY(-50%)';
+                    
+                    aiButton.style.width = '75px';
+                    aiButton.style.height = '75px';
+                    aiButton.style.right = '0';
+                    aiButton.style.top = '70%';
+                    aiButton.style.transform = 'translateY(-50%)';
+                    
+                    const lineImg = lineButton.querySelector('img');
+                    const aiImg = aiButton.querySelector('img');
+                    if (lineImg) {
+                        lineImg.style.width = '50px';
+                        lineImg.style.height = '50px';
+                    }
+                    if (aiImg) {
+                        aiImg.style.width = '50px';
+                        aiImg.style.height = '50px';
+                    }
+                }
+            } catch (error) {
+                console.error('调整移动端样式时出错:', error);
+            }
+        }
+
+        // 确保DOM加载完成后再执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面加载时执行一次
+            adjustForMobile();
+            // 窗口大小改变时重新执行
+            window.addEventListener('resize', adjustForMobile);
+        });
+
+        function showChatWindow() {
+            document.getElementById('ai-chat-window').style.display = 'block';
+        }
+
+        function hideChatWindow() {
+            document.getElementById('ai-chat-window').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                // 添加用户消息到聊天窗口
+                addMessage(message, 'user');
+                
+                // 清空输入框
+                input.value = '';
+                
+                // 发送消息到服务器
+                fetch('https://qikaka625.app.n8n.cloud/webhook/64000a5e-2ee2-40dd-b523-e9f928a8c6a7/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chatInput: message,
+                        type: 'message',
+                        platform: 'web',
+                        user: {
+                            id: 'web-user',
+                            name: 'Web User'
+                        }
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Server response:', data); // 添加调试日志
+                    console.log('Response type:', typeof data); // 检查响应类型
+                    console.log('Response keys:', Object.keys(data)); // 检查响应对象的键
+                    console.log('Full response data:', JSON.stringify(data, null, 2)); // 打印完整的响应数据
+                    
+                    // 尝试不同的响应格式
+                    if (data && data.text) {
+                        addMessage(data.text, 'ai');
+                    } else if (data && data.json && data.json.text) {
+                        addMessage(data.json.text, 'ai');
+                    } else if (data && data.response) {
+                        addMessage(data.response, 'ai');
+                    } else if (data && typeof data === 'string') {
+                        addMessage(data, 'ai');
+                    } else if (data && data.message) {
+                        addMessage(data.message, 'ai');
+                    } else if (data && data.content) {
+                        addMessage(data.content, 'ai');
+                    } else if (data && data.answer) {
+                        addMessage(data.answer, 'ai');
+                    } else if (data && data.output) {
+                        addMessage(data.output, 'ai');
+                    } else if (data && data.result) {
+                        addMessage(data.result, 'ai');
+                    } else if (data && data.data) {
+                        addMessage(data.data, 'ai');
+                    } else {
+                        console.log('Unexpected response format:', data);
+                        addMessage('抱歉，服务器返回的数据格式不正确。', 'ai');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error); // 添加错误日志
+                    addMessage('抱歉，连接服务器时发生错误，请稍后再试。', 'ai');
+                });
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.marginBottom = '10px';
+            messageDiv.style.padding = '8px';
+            messageDiv.style.borderRadius = '10px';
+            messageDiv.style.maxWidth = '80%';
+            
+            if (sender === 'user') {
+                messageDiv.style.marginLeft = 'auto';
+                messageDiv.style.background = '#007bff';
+                messageDiv.style.color = 'white';
+            } else {
+                messageDiv.style.marginRight = 'auto';
+                messageDiv.style.background = '#2c2c2c';
+                messageDiv.style.color = '#ffffff';
+            }
+            
+            messageDiv.textContent = text;
+            messagesDiv.appendChild(messageDiv);
+            
+            // 滚动到底部
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 添加回车键发送消息的功能
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
 </body>
 </html>
