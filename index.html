@@ -217,6 +217,7 @@
     </div>
 
     <!-- 添加聊天功能的脚本 -->
+    <script src="js/chat-history.js"></script>
     <script>
         // 添加移动端适配
         function adjustForMobile() {
@@ -308,13 +309,16 @@
             document.getElementById('ai-chat-window').style.display = 'none';
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('message-input');
             const message = input.value.trim();
             
             if (message) {
                 // 添加用户消息到聊天窗口
                 addMessage(message, 'user');
+                
+                // 记录用户消息
+                await window.chatHistoryManager.addChatMessage(message, true);
                 
                 // 清空输入框
                 input.value = '';
@@ -342,41 +346,47 @@
                     }
                     return response.json();
                 })
-                .then(data => {
-                    console.log('Server response:', data); // 添加调试日志
-                    console.log('Response type:', typeof data); // 检查响应类型
-                    console.log('Response keys:', Object.keys(data)); // 检查响应对象的键
-                    console.log('Full response data:', JSON.stringify(data, null, 2)); // 打印完整的响应数据
+                .then(async data => {
+                    console.log('Server response:', data);
                     
+                    let aiResponse = '';
                     // 尝试不同的响应格式
                     if (data && data.text) {
-                        addMessage(data.text, 'ai');
+                        aiResponse = data.text;
                     } else if (data && data.json && data.json.text) {
-                        addMessage(data.json.text, 'ai');
+                        aiResponse = data.json.text;
                     } else if (data && data.response) {
-                        addMessage(data.response, 'ai');
+                        aiResponse = data.response;
                     } else if (data && typeof data === 'string') {
-                        addMessage(data, 'ai');
+                        aiResponse = data;
                     } else if (data && data.message) {
-                        addMessage(data.message, 'ai');
+                        aiResponse = data.message;
                     } else if (data && data.content) {
-                        addMessage(data.content, 'ai');
+                        aiResponse = data.content;
                     } else if (data && data.answer) {
-                        addMessage(data.answer, 'ai');
+                        aiResponse = data.answer;
                     } else if (data && data.output) {
-                        addMessage(data.output, 'ai');
+                        aiResponse = data.output;
                     } else if (data && data.result) {
-                        addMessage(data.result, 'ai');
+                        aiResponse = data.result;
                     } else if (data && data.data) {
-                        addMessage(data.data, 'ai');
+                        aiResponse = data.data;
                     } else {
                         console.log('Unexpected response format:', data);
-                        addMessage('抱歉，服务器返回的数据格式不正确。', 'ai');
+                        aiResponse = '抱歉，服务器返回的数据格式不正确。';
                     }
+                    
+                    // 添加AI回复到聊天窗口
+                    addMessage(aiResponse, 'ai');
+                    
+                    // 记录AI回复
+                    await window.chatHistoryManager.addChatMessage(aiResponse, false);
                 })
                 .catch(error => {
-                    console.error('Error:', error); // 添加错误日志
-                    addMessage('抱歉，连接服务器时发生错误，请稍后再试。', 'ai');
+                    console.error('Error:', error);
+                    const errorMessage = '抱歉，连接服务器时发生错误，请稍后再试。';
+                    addMessage(errorMessage, 'ai');
+                    window.chatHistoryManager.addChatMessage(errorMessage, false);
                 });
             }
         }
