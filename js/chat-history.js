@@ -1,11 +1,25 @@
 // 聊天记录管理
 class ChatHistoryManager {
     constructor() {
-        this.chatHistory = new Map(); // 使用Map存储聊天记录，key为IP地址
+        this.chatHistory = new Map(); // 使用Map存储聊天记录，key为用户ID
         this.emailConfig = {
-            recipientEmail: 'qikaka625@gmail.com', // 接收邮件的邮箱
-            sendInterval: 24 * 60 * 60 * 1000 // 每24小时发送一次
+            recipientEmail: 'qikaka625@gmail.com' // 接收邮件的邮箱
         };
+        this.currentUserId = null; // 当前用户ID
+    }
+    
+    // 生成随机用户ID
+    generateUserId(ip) {
+        return 'user_' + ip + '_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    }
+    
+    // 获取或创建用户ID
+    async getUserId() {
+        if (!this.currentUserId) {
+            const ip = await this.getUserIP();
+            this.currentUserId = this.generateUserId(ip);
+        }
+        return this.currentUserId;
     }
 
     // 获取用户IP地址
@@ -22,20 +36,17 @@ class ChatHistoryManager {
 
     // 添加聊天记录
     async addChatMessage(message, isUser = true) {
-        const ip = await this.getUserIP();
-        if (!this.chatHistory.has(ip)) {
-            this.chatHistory.set(ip, []);
+        const userId = await this.getUserId();
+        if (!this.chatHistory.has(userId)) {
+            this.chatHistory.set(userId, []);
         }
         
         const timestamp = new Date().toISOString();
-        this.chatHistory.get(ip).push({
+        this.chatHistory.get(userId).push({
             message,
             isUser,
             timestamp
         });
-
-        // 检查是否需要发送邮件
-        this.checkAndSendEmail();
     }
 
     // 获取指定IP的聊天记录
@@ -44,11 +55,16 @@ class ChatHistoryManager {
     }
 
     // 格式化聊天记录为邮件内容
-    formatChatHistoryForEmail(ip) {
-        const history = this.getChatHistory(ip);
+    async formatChatHistoryForEmail(userId) {
+        const history = this.getChatHistory(userId);
         if (history.length === 0) return '';
 
-        let emailContent = `用户IP: ${ip}\n`;
+        // 从userId中提取IP (格式: user_IP_randomString_timestamp)
+        const ipMatch = userId.match(/user_([^_]+)_/);
+        const ip = ipMatch ? ipMatch[1] : '未知IP';
+
+        let emailContent = `用户ID: ${userId}\n`;
+        emailContent += `用户IP: ${ip}\n`;
         emailContent += `聊天时间: ${new Date().toLocaleString()}\n\n`;
         emailContent += '聊天记录:\n';
         emailContent += '----------------------------------------\n';
@@ -114,22 +130,35 @@ class ChatHistoryManager {
         }
     }
 
-    // 检查并发送邮件
-    checkAndSendEmail() {
-        const now = Date.now();
-        if (!this.lastEmailTime || (now - this.lastEmailTime) >= this.emailConfig.sendInterval) {
-            let emailContent = '';
-            for (const [ip, history] of this.chatHistory.entries()) {
-                if (history.length > 0) {
-                    emailContent += this.formatChatHistoryForEmail(ip);
-                    emailContent += '\n----------------------------------------\n\n';
-                }
+    // 检查并发送邮件 (保留方法但不再使用24小时间隔逻辑)
+    async checkAndSendEmail() {
+        let emailContent = '';
+        for (const [userId, history] of this.chatHistory.entries()) {
+            if (history.length > 0) {
+                emailContent += await this.formatChatHistoryForEmail(userId);
+                emailContent += '\n----------------------------------------\n\n';
             }
+        }
 
-            if (emailContent) {
-                this.sendEmail(emailContent);
-                this.lastEmailTime = now;
+        if (emailContent) {
+            await this.sendEmail(emailContent);
+            this.lastEmailTime = Date.now();
+        }
+    }
+    
+    // 在对话结束时发送邮件
+    async sendEmailOnConversationEnd() {
+        let emailContent = '';
+        for (const [userId, history] of this.chatHistory.entries()) {
+            if (history.length > 0) {
+                emailContent += await this.formatChatHistoryForEmail(userId);
+                emailContent += '\n----------------------------------------\n\n';
             }
+        }
+
+        if (emailContent) {
+            await this.sendEmail(emailContent);
+            this.lastEmailTime = Date.now();
         }
     }
 
@@ -138,9 +167,12 @@ class ChatHistoryManager {
         try {
             console.log('开始测试邮件发送');
             
-            // 添加一些测试数据
+            // 生成测试用户ID
             const testIP = '192.168.1.1';
-            this.chatHistory.set(testIP, [
+            const testUserId = this.generateUserId(testIP);
+            
+            // 添加一些测试数据
+            this.chatHistory.set(testUserId, [
                 {
                     message: '你好',
                     isUser: true,
@@ -165,9 +197,9 @@ class ChatHistoryManager {
 
             // 发送测试邮件
             let emailContent = '';
-            for (const [ip, history] of this.chatHistory.entries()) {
+            for (const [userId, history] of this.chatHistory.entries()) {
                 if (history.length > 0) {
-                    emailContent += this.formatChatHistoryForEmail(ip);
+                    emailContent += await this.formatChatHistoryForEmail(userId);
                     emailContent += '\n----------------------------------------\n\n';
                 }
             }

@@ -305,8 +305,16 @@
             document.getElementById('ai-chat-window').style.display = 'block';
         }
 
-        function hideChatWindow() {
+        async function hideChatWindow() {
             document.getElementById('ai-chat-window').style.display = 'none';
+            // 在关闭聊天窗口时发送邮件
+            if (window.chatHistoryManager && window.chatHistoryManager.chatHistory.size > 0) {
+                try {
+                    await window.chatHistoryManager.sendEmailOnConversationEnd();
+                } catch (error) {
+                    console.error('发送邮件失败:', error);
+                }
+            }
         }
 
         async function sendMessage() {
