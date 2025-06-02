@@ -332,7 +332,7 @@
                 input.value = '';
                 
                 // 发送消息到服务器
-                fetch('https://qikaka625.app.n8n.cloud/webhook/64000a5e-2ee2-40dd-b523-e9f928a8c6a7/chat', {
+                fetch('https://zuozhu625.vip/webhook/64000a5e-2ee2-40dd-b523-e9f928a8c6a7/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -358,30 +358,84 @@
                     console.log('Server response:', data);
                     
                     let aiResponse = '';
-                    // 尝试不同的响应格式
-                    if (data && data.text) {
-                        aiResponse = data.text;
-                    } else if (data && data.json && data.json.text) {
-                        aiResponse = data.json.text;
-                    } else if (data && data.response) {
-                        aiResponse = data.response;
-                    } else if (data && typeof data === 'string') {
+                    
+                    // 如果data是对象，尝试提取文本
+                    if (typeof data === 'object' && data !== null) {
+                        if (data.json && data.json.text) {
+                            aiResponse = data.json.text;
+                        } else if (data.text) {
+                            aiResponse = data.text;
+                        } else if (data.response) {
+                            aiResponse = data.response;
+                        } else if (data.output) {
+                            aiResponse = data.output;
+                        } else if (data.message) {
+                            aiResponse = data.message;
+                        } else if (data.content) {
+                            aiResponse = data.content;
+                        } else if (data.answer) {
+                            aiResponse = data.answer;
+                        } else if (data.result) {
+                            aiResponse = data.result;
+                        } else if (data.data) {
+                            aiResponse = data.data;
+                        } else {
+                            // 如果没有找到，尝试转换为字符串
+                            aiResponse = JSON.stringify(data);
+                        }
+                    } else if (typeof data === 'string') {
                         aiResponse = data;
-                    } else if (data && data.message) {
-                        aiResponse = data.message;
-                    } else if (data && data.content) {
-                        aiResponse = data.content;
-                    } else if (data && data.answer) {
-                        aiResponse = data.answer;
-                    } else if (data && data.output) {
-                        aiResponse = data.output;
-                    } else if (data && data.result) {
-                        aiResponse = data.result;
-                    } else if (data && data.data) {
-                        aiResponse = data.data;
                     } else {
-                        console.log('Unexpected response format:', data);
-                        aiResponse = '抱歉，服务器返回的数据格式不正确。';
+                        aiResponse = String(data);
+                    }
+                    
+                    // 清理响应中的代码块
+                    if (aiResponse.includes('```')) {
+                        // 尝试提取```json块中的内容
+                        const jsonBlockMatch = aiResponse.match(/```json\s*([\s\S]*?)```/);
+                        if (jsonBlockMatch) {
+                            try {
+                                const jsonContent = jsonBlockMatch[1].trim();
+                                const parsedJson = JSON.parse(jsonContent);
+                                if (parsedJson.json && parsedJson.json.text) {
+                                    aiResponse = parsedJson.json.text;
+                                } else if (parsedJson.text) {
+                                    aiResponse = parsedJson.text;
+                                } else if (parsedJson.output) {
+                                    aiResponse = parsedJson.output;
+                                }
+                            } catch (e) {
+                                // 如果解析失败，移除整个代码块
+                                aiResponse = aiResponse.replace(/```[\s\S]*?```/g, '').trim();
+                            }
+                        } else {
+                            // 移除所有代码块
+                            aiResponse = aiResponse.replace(/```[\s\S]*?```/g, '').trim();
+                        }
+                    }
+                    
+                    // 如果响应中仍然包含JSON结构，尝试提取
+                    if (aiResponse.includes('{') && aiResponse.includes('}')) {
+                        try {
+                            const jsonMatch = aiResponse.match(/\{.*\}/s);
+                            if (jsonMatch) {
+                                const jsonData = JSON.parse(jsonMatch[0]);
+                                if (jsonData.json && jsonData.json.text) {
+                                    aiResponse = jsonData.json.text;
+                                } else if (jsonData.text) {
+                                    aiResponse = jsonData.text;
+                                } else if (jsonData.output) {
+                                    aiResponse = jsonData.output;
+                                }
+                            }
+                        } catch (e) {
+                            // 保持原样
+                        }
+                    }
+                    
+                    // 确保响应不为空
+                    if (!aiResponse || aiResponse.trim() === '') {
+                        aiResponse = '抱歉，我没有理解您的问题。';
                     }
                     
                     // 添加AI回复到聊天窗口

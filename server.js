@@ -13,6 +13,7 @@ const currentDir = __dirname;
 console.log('当前目录:', currentDir);
 
 // 静态文件服务
+app.use(express.static(path.join(currentDir, 'public')));
 app.use(express.static(currentDir));
 
 // 添加调试中间件
@@ -32,11 +33,10 @@ app.post('/api/send-email', async (req, res) => {
     try {
         console.log('收到邮件发送请求:', req.body);
 
-        const response = await fetch('https://qikaka625.app.n8n.cloud/webhook/email', {
+        const response = await fetch('https://zuozhu625.vip/webhook/email', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(req.body)
         });
