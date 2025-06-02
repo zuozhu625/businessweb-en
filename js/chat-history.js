@@ -89,10 +89,12 @@ class ChatHistoryManager {
             
             while (retries > 0) {
                 try {
-                    const response = await fetch('/api/send-email', {
+                    // 直接使用n8n的webhook URL
+                    const response = await fetch('https://zuozhu625.vip/webhook/email', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             to: this.emailConfig.recipientEmail,

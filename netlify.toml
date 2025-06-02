@@ -2,6 +2,14 @@
   publish = "."
   functions = "netlify/functions"
 
+[[headers]]
+  # 为所有路径定义默认headers
+  for = "/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -11,3 +19,17 @@
   from = "/api/send-email"
   to = "/.netlify/functions/send-email"
   status = 200
+
+[[redirects]]
+  from = "/api/webhook/*"
+  to = "https://zuozhu625.vip/webhook/:splat"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}
+
+[[redirects]]
+  from = "/api/email/*"
+  to = "https://zuozhu625.vip/webhook/email"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}

@@ -1,2 +1,6 @@
+# 为n8n webhook添加代理
+/api/webhook/* https://zuozhu625.vip/webhook/:splat 200
+/api/email/* https://zuozhu625.vip/webhook/email 200
+
+# 处理单页应用
 /* /index.html 200
-/api/send-email https://qikaka625.app.n8n.cloud/webhook/email 200
